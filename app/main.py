@@ -54,10 +54,11 @@ async def extract_info(file: UploadFile = File(None), message: str = None):
 @app.post("/api/handle_chat")
 async def handle_chat(data: ChatInput):
     try:
-        print("Goi handle chat")
+    
         result = langchain_service.process_input(
-            text_content=data.message, 
-            current_data=data.current_data.dict() # Chuyển pydantic sang dict
+            text_content="",
+            current_data=data.current_data.dict(), # Chuyển pydantic sang dict
+            user_msg=data.message
         )
         return result
     except Exception as e:

@@ -1,29 +1,38 @@
 from langchain_google_genai import  ChatGoogleGenerativeAI
 from langchain_groq import ChatGroq
 from langchain_anthropic import ChatAnthropic
+from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
 import os
 from dotenv import load_dotenv
 from app.langchain_logic.prompts import CV_EXTRACT_PROMPT_TEMPLATE as CV_EXTRACT_PROMPT
 from app.langchain_logic.parser import parser
+
 load_dotenv()
 
 class LangChainService:
     def __init__(self):
-        self.llm = ChatAnthropic(
-            model = "claude-3-5-sonnet-20240620", # You can choose other models like "gemini-2.0-flash" or "gemini-1.5-pro" based on your needs
-            anthropic_api_key = os.getenv("GEMENI_API_KEY"),
-            temperature = 0.2 # Adjust temperature lower to make the output more deterministic, or higher for more creativity
+        self.llm = ChatOpenAI(
+            model = "gpt-4o-mini", # You can choose other models like "gemini-2.0-flash" or "gemini-1.5-pro" based on your needs
+            openai_api_key = os.getenv("GEMENI_API_KEY"),
+            temperature = 1 # Adjust temperature lower to make the output more deterministic, or higher for more creativity
         )
         prompt_template = ChatPromptTemplate.from_template(CV_EXTRACT_PROMPT)
         self.chain = prompt_template | self.llm | parser
     
-    def process_input(self, text_content: str, current_data: dict):
+    def process_input(self, text_content: str, current_data: dict, user_msg: str = None):
         try:
+            print("User message: ", user_msg)
+            print("Current data: ", current_data)
+
+            # clean_data = {k: (v if v is not None else "Chưa có") for k, v in current_data.items()}
+
+            # print("Clean data sent to LLM: ", clean_data)
             result =  self.chain.invoke({
                 "format_instructions": parser.get_format_instructions(),
                 "context": text_content,
                 "current_data": current_data,
+                "user_msg": user_msg
             })
             if hasattr(result, "dict"):
                 final_result = result.dict()
