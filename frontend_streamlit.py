@@ -79,6 +79,11 @@ if prompt := st.chat_input("Nhập thông tin tại đây..."):
         if response.status_code == 200:
             result = response.json()
             #Neu hoi ngoai le thi phan hoi lai va khong update du lieu
+            if result.get("next_question"):
+                print("Next question from API: ", result.get("next_question"))
+                st.session_state["message"].append({""
+                "role": "assistant", "content": result.get("next_question", "")})
+                st.rerun()
             if result.get("is_off_topic"):
                 st.session_state["message"].append({
                     "role": "assistant", 
@@ -93,8 +98,7 @@ if prompt := st.chat_input("Nhập thông tin tại đây..."):
                         
            
                 #Cập nhật câu hỏi tiếp theo nếu còn thiếu thông tin
-            st.session_state["message"].append({""
-            "role": "assistant", "content": result.get("next_question", "")})
+            
 
         else:
             st.error("Đã có lỗi xảy ra khi xử lý thông tin. Vui lòng thử lại sau.")

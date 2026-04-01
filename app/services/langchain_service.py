@@ -1,5 +1,6 @@
 from langchain_google_genai import  ChatGoogleGenerativeAI
 from langchain_groq import ChatGroq
+from langchain_anthropic import ChatAnthropic
 from langchain_core.prompts import ChatPromptTemplate
 import os
 from dotenv import load_dotenv
@@ -9,9 +10,9 @@ load_dotenv()
 
 class LangChainService:
     def __init__(self):
-        self.llm = ChatGroq(
-            model = "llama-3.3-70b-versatile",
-            groq_api_key = os.getenv("GEMENI_API_KEY"),
+        self.llm = ChatAnthropic(
+            model = "claude-3-5-sonnet-20240620", # You can choose other models like "gemini-2.0-flash" or "gemini-1.5-pro" based on your needs
+            anthropic_api_key = os.getenv("GEMENI_API_KEY"),
             temperature = 0.2 # Adjust temperature lower to make the output more deterministic, or higher for more creativity
         )
         prompt_template = ChatPromptTemplate.from_template(CV_EXTRACT_PROMPT)
