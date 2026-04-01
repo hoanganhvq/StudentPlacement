@@ -5,760 +5,580 @@ import plotly.graph_objects as go
 
 BASE_URL = "http://localhost:8000"
 
-# ══════════════════════════════════════════════════════════
-# PAGE CONFIG
-# ══════════════════════════════════════════════════════════
 st.set_page_config(
-    page_title="Career Advisor AI",
-    page_icon="✦",
-    layout="centered",
-    initial_sidebar_state="expanded",
+    page_title="CareerAI — Dự báo sự nghiệp",
+    layout="wide",
+    initial_sidebar_state="expanded"
 )
 
-# ══════════════════════════════════════════════════════════
-# GLOBAL CSS
-# ══════════════════════════════════════════════════════════
+# ─── CUSTOM CSS ──────────────────────────────────────────────────────────────
 st.markdown("""
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,300;12..96,400;12..96,500;12..96,600;12..96,700&family=DM+Mono:wght@300;400;500&display=swap');
+/* ── Google Fonts ── */
+@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
 
-*, *::before, *::after { box-sizing: border-box; }
-
-html, body,
-[data-testid="stApp"],
-[data-testid="stAppViewContainer"] {
-    background: #080810 !important;
-    font-family: 'Bricolage Grotesque', sans-serif !important;
-    color: #c8c8e0 !important;
+/* ── Root variables ── */
+:root {
+    --bg-deep:     #0b0f1a;
+    --bg-card:     #111827;
+    --bg-card2:    #1a2235;
+    --border:      rgba(99,179,237,0.15);
+    --accent:      #63b3ed;
+    --accent-soft: rgba(99,179,237,0.12);
+    --gold:        #f6c90e;
+    --green:       #48bb78;
+    --red:         #fc8181;
+    --text-main:   #e2e8f0;
+    --text-muted:  #718096;
+    --radius:      14px;
+    --font-body:   'DM Sans', sans-serif;
+    --font-serif:  'DM Serif Display', serif;
+    --font-mono:   'JetBrains Mono', monospace;
 }
 
-[data-testid="stAppViewContainer"]::before {
-    content: '';
-    position: fixed;
-    top: -20vh; left: 50%; transform: translateX(-50%);
-    width: 900px; height: 500px;
-    background: radial-gradient(ellipse at 30% 50%, rgba(91,77,224,0.1) 0%, transparent 60%),
-                radial-gradient(ellipse at 70% 50%, rgba(56,189,248,0.06) 0%, transparent 60%);
-    pointer-events: none; z-index: 0;
+/* ── Global reset ── */
+html, body, [class*="css"] {
+    font-family: var(--font-body) !important;
+    color: var(--text-main) !important;
 }
 
-#MainMenu, footer, header,
-[data-testid="stToolbar"],
-[data-testid="stDecoration"],
-[data-testid="stStatusWidget"],
-.stDeployButton { display: none !important; }
-
-[data-testid="stAppViewContainer"] > .main > .block-container {
-    max-width: 760px !important;
-    padding: 2rem 1.75rem 7rem !important;
-    margin: 0 auto;
-    position: relative; z-index: 1;
+.stApp {
+    background: var(--bg-deep) !important;
 }
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: var(--bg-deep); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; }
 
 /* ── Sidebar ── */
 [data-testid="stSidebar"] {
-    background: #0c0c18 !important;
-    border-right: 1px solid rgba(255,255,255,0.05) !important;
+    background: var(--bg-card) !important;
+    border-right: 1px solid var(--border) !important;
 }
-[data-testid="stSidebar"] > div:first-child { padding-top: 1.5rem !important; }
-[data-testid="stSidebarNav"] { display: none !important; }
+
+[data-testid="stSidebar"] * { color: var(--text-main) !important; }
+
+.sidebar-logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 0 24px 0;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 20px;
+}
+.sidebar-logo .icon { font-size: 28px; }
+.sidebar-logo .brand { font-family: var(--font-serif); font-size: 22px; line-height: 1.1; }
+.sidebar-logo .brand span { color: var(--accent); }
+
+.sidebar-section {
+    background: var(--bg-card2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    margin-bottom: 16px;
+}
+.sidebar-section h4 {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-muted) !important;
+    margin: 0 0 12px 0;
+}
+
+/* File uploader */
+[data-testid="stFileUploader"] {
+    background: var(--bg-deep) !important;
+    border: 1.5px dashed var(--border) !important;
+    border-radius: var(--radius) !important;
+}
+[data-testid="stFileUploader"]:hover {
+    border-color: var(--accent) !important;
+}
+
+/* ── Hero header ── */
+.hero {
+    background: linear-gradient(135deg, var(--bg-card2) 0%, var(--bg-card) 100%);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 32px 36px;
+    margin-bottom: 28px;
+    position: relative;
+    overflow: hidden;
+}
+.hero::before {
+    content: '';
+    position: absolute;
+    top: -60px; right: -60px;
+    width: 200px; height: 200px;
+    background: radial-gradient(circle, rgba(99,179,237,0.12) 0%, transparent 70%);
+    pointer-events: none;
+}
+.hero-title {
+    font-family: var(--font-serif) !important;
+    font-size: 2.1rem;
+    line-height: 1.15;
+    margin: 0 0 8px 0;
+    color: var(--text-main) !important;
+}
+.hero-title span { color: var(--accent); }
+.hero-sub {
+    color: var(--text-muted) !important;
+    font-size: 0.95rem;
+    margin: 0;
+}
+
+/* ── Mode buttons ── */
+.stButton > button {
+    background: var(--bg-card2) !important;
+    border: 1.5px solid var(--border) !important;
+    color: var(--text-main) !important;
+    border-radius: var(--radius) !important;
+    font-family: var(--font-body) !important;
+    font-size: 0.95rem !important;
+    font-weight: 500 !important;
+    padding: 14px 20px !important;
+    transition: all 0.2s ease !important;
+    width: 100%;
+}
+.stButton > button:hover {
+    background: var(--accent-soft) !important;
+    border-color: var(--accent) !important;
+    color: var(--accent) !important;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(99,179,237,0.15) !important;
+}
+
+/* Primary button */
+.stButton > button[kind="primary"],
+div[data-testid="stButton"] > button {
+    background: linear-gradient(135deg, #2b6cb0, #2c5282) !important;
+    border-color: var(--accent) !important;
+}
 
 /* ── Chat messages ── */
 [data-testid="stChatMessage"] {
     background: transparent !important;
-    border: none !important;
-    padding: 2px 0 !important;
-    gap: 12px !important;
+    padding: 4px 0 !important;
 }
-[data-testid="stChatMessage"]:has([data-testid="chatAvatarIcon-assistant"]) .stMarkdown p,
-[data-testid="stChatMessage"]:has([data-testid="chatAvatarIcon-assistant"]) .stMarkdown li {
-    color: #cccce8 !important;
+
+/* Assistant bubble */
+[data-testid="stChatMessage"]:has([data-testid="chatAvatarIcon-assistant"]) .stMarkdown,
+[data-testid="stChatMessage"][data-role="assistant"] .stMarkdown {
+    background: var(--bg-card2) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: 4px 16px 16px 16px !important;
+    padding: 14px 18px !important;
+    margin-left: 0;
+    max-width: 82%;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.3);
 }
-[data-testid="stChatMessage"]:has([data-testid="chatAvatarIcon-assistant"]) .stMarkdown {
-    background: rgba(255,255,255,0.035) !important;
-    backdrop-filter: blur(12px) !important;
-    border: 1px solid rgba(255,255,255,0.07) !important;
-    border-radius: 2px 18px 18px 18px !important;
-    padding: 13px 17px !important;
-    font-size: 14px !important;
-    line-height: 1.75 !important;
-    box-shadow: 0 4px 24px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.06) !important;
+
+/* User bubble */
+[data-testid="stChatMessage"]:has([data-testid="chatAvatarIcon-user"]) .stMarkdown,
+[data-testid="stChatMessage"][data-role="user"] .stMarkdown {
+    background: linear-gradient(135deg, #1a365d, #1e3a5f) !important;
+    border: 1px solid rgba(99,179,237,0.3) !important;
+    border-radius: 16px 4px 16px 16px !important;
+    padding: 14px 18px !important;
+    margin-left: auto;
+    max-width: 78%;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.3);
 }
-[data-testid="stChatMessage"]:has([data-testid="chatAvatarIcon-user"]) .stMarkdown p {
-    color: #fff !important;
-}
-[data-testid="stChatMessage"]:has([data-testid="chatAvatarIcon-user"]) .stMarkdown {
-    background: linear-gradient(135deg, #5b4de0 0%, #7c6af5 50%, #9d8fff 100%) !important;
-    border-radius: 18px 2px 18px 18px !important;
-    padding: 13px 17px !important;
-    font-size: 14px !important;
-    line-height: 1.75 !important;
-    border: none !important;
-    box-shadow: 0 6px 28px rgba(91,77,224,0.45), inset 0 1px 0 rgba(255,255,255,0.15) !important;
-}
+
+/* Avatar icons */
 [data-testid="chatAvatarIcon-assistant"] {
-    background: linear-gradient(135deg, #5b4de0, #38bdf8) !important;
-    border-radius: 10px !important;
-    box-shadow: 0 0 0 1px rgba(91,77,224,0.4), 0 4px 12px rgba(91,77,224,0.3) !important;
-    border: none !important;
+    background: linear-gradient(135deg, var(--accent), #4299e1) !important;
+    border-radius: 50% !important;
 }
 [data-testid="chatAvatarIcon-user"] {
-    background: #1a1a2e !important;
-    border-radius: 10px !important;
-    border: 1px solid rgba(255,255,255,0.1) !important;
+    background: linear-gradient(135deg, #553c9a, #6b46c1) !important;
+    border-radius: 50% !important;
 }
 
 /* ── Chat input ── */
-[data-testid="stChatInputContainer"] {
-    background: rgba(8,8,16,0.95) !important;
-    backdrop-filter: blur(20px) !important;
-    border-top: 1px solid rgba(255,255,255,0.06) !important;
-    padding: 14px 20px 16px !important;
-    position: fixed !important; bottom: 0 !important;
-    left: 50% !important; transform: translateX(-50%) !important;
-    width: 100% !important; max-width: 760px !important;
-    z-index: 999 !important;
+[data-testid="stChatInput"] {
+    background: var(--bg-card) !important;
+    border: 1.5px solid var(--border) !important;
+    border-radius: 14px !important;
+    padding: 4px 8px !important;
+}
+[data-testid="stChatInput"]:focus-within {
+    border-color: var(--accent) !important;
+    box-shadow: 0 0 0 3px rgba(99,179,237,0.1) !important;
 }
 [data-testid="stChatInput"] textarea {
-    background: rgba(255,255,255,0.04) !important;
-    border: 1px solid rgba(255,255,255,0.09) !important;
-    border-radius: 14px !important;
-    color: #e8e8f8 !important;
-    font-family: 'Bricolage Grotesque', sans-serif !important;
-    font-size: 14px !important;
-    caret-color: #7c6af5 !important;
-    transition: border-color .2s, box-shadow .2s !important;
+    background: transparent !important;
+    color: var(--text-main) !important;
+    font-family: var(--font-body) !important;
 }
-[data-testid="stChatInput"] textarea:focus {
-    border-color: rgba(124,106,245,0.5) !important;
-    box-shadow: 0 0 0 3px rgba(91,77,224,0.12) !important;
-}
-[data-testid="stChatInput"] textarea::placeholder { color: #44445a !important; }
-[data-testid="stChatInput"] button {
-    background: linear-gradient(135deg, #5b4de0, #7c6af5) !important;
-    border-radius: 11px !important; border: none !important;
-    box-shadow: 0 4px 14px rgba(91,77,224,0.5) !important;
-    transition: box-shadow .2s, transform .15s !important;
-}
-[data-testid="stChatInput"] button:hover {
-    box-shadow: 0 6px 20px rgba(91,77,224,0.65) !important;
-    transform: scale(1.04) !important;
-}
-
-/* ── Buttons ── */
-.stButton > button {
-    background: rgba(255,255,255,0.04) !important;
-    border: 1px solid rgba(255,255,255,0.09) !important;
-    border-radius: 12px !important;
-    color: #c8c8e0 !important;
-    font-family: 'Bricolage Grotesque', sans-serif !important;
-    font-size: 13.5px !important; font-weight: 500 !important;
-    padding: 10px 22px !important; letter-spacing: 0.01em !important;
-    transition: all .25s cubic-bezier(.4,0,.2,1) !important;
-}
-.stButton > button:hover {
-    border-color: rgba(124,106,245,0.4) !important;
-    color: #e8e4ff !important;
-    transform: translateY(-2px) !important;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.3), 0 0 0 1px rgba(91,77,224,0.15) !important;
-    background: rgba(91,77,224,0.1) !important;
-}
-.stButton > button:active { transform: translateY(0) !important; }
-
-/* ── File uploader ── */
-[data-testid="stFileUploader"] section {
-    background: rgba(255,255,255,0.02) !important;
-    border: 1.5px dashed rgba(124,106,245,0.22) !important;
-    border-radius: 16px !important;
-    transition: border-color .2s, background .2s !important;
-}
-[data-testid="stFileUploader"] section:hover {
-    background: rgba(91,77,224,0.05) !important;
-    border-color: rgba(124,106,245,0.42) !important;
-}
-[data-testid="stFileUploaderDropzoneInstructions"] div span {
-    color: #444460 !important; font-size: 13px !important;
-}
-[data-testid="stFileUploader"] label { display: none !important; }
 
 /* ── Metrics ── */
 [data-testid="stMetric"] {
-    background: rgba(255,255,255,0.025) !important;
-    border: 1px solid rgba(255,255,255,0.07) !important;
-    border-radius: 16px !important;
-    padding: 20px 22px !important;
-    position: relative !important; overflow: hidden !important;
-    transition: border-color .2s !important;
+    background: var(--bg-card2) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: var(--radius) !important;
+    padding: 20px 24px !important;
 }
-[data-testid="stMetric"]:hover { border-color: rgba(124,106,245,0.3) !important; }
-[data-testid="stMetric"]::before {
-    content: ''; position: absolute; inset: 0;
-    background: radial-gradient(circle at top left, rgba(91,77,224,0.07), transparent 70%);
-    pointer-events: none;
-}
-[data-testid="stMetricLabel"] p {
-    color: #555570 !important; font-size: 11.5px !important;
-    text-transform: uppercase !important; letter-spacing: .08em !important;
-    font-weight: 600 !important;
+[data-testid="stMetricLabel"] {
+    color: var(--text-muted) !important;
+    font-size: 0.8rem !important;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
 }
 [data-testid="stMetricValue"] {
-    font-size: 32px !important; font-weight: 700 !important;
-    background: linear-gradient(135deg, #a59bff, #e8e4ff) !important;
-    -webkit-background-clip: text !important; -webkit-text-fill-color: transparent !important;
-    font-family: 'Bricolage Grotesque', sans-serif !important;
+    font-family: var(--font-serif) !important;
+    font-size: 2rem !important;
+    color: var(--accent) !important;
 }
 
-/* ── Progress ── */
-[data-testid="stProgressBar"] {
-    background: rgba(255,255,255,0.05) !important;
-    border-radius: 99px !important; height: 4px !important;
-}
-[data-testid="stProgressBar"] > div {
-    background: linear-gradient(90deg, #5b4de0, #38bdf8) !important;
-    border-radius: 99px !important;
-    box-shadow: 0 0 8px rgba(91,77,224,0.5) !important;
+/* ── Divider ── */
+hr {
+    border-color: var(--border) !important;
+    margin: 28px 0 !important;
 }
 
-/* ── Expander ── */
-[data-testid="stExpander"] {
-    background: rgba(255,255,255,0.02) !important;
-    border: 1px solid rgba(255,255,255,0.06) !important;
-    border-radius: 14px !important;
-}
-[data-testid="stExpander"] summary {
-    color: #666688 !important; font-size: 13px !important;
-    font-family: 'Bricolage Grotesque', sans-serif !important;
-    padding: 14px 18px !important;
-}
-[data-testid="stExpander"] summary:hover { color: #b0b0d0 !important; }
-
-/* ── Alerts ── */
+/* ── Info / success / error boxes ── */
 [data-testid="stAlert"] {
-    background: rgba(91,77,224,0.08) !important;
-    border: 1px solid rgba(91,77,224,0.2) !important;
-    border-radius: 12px !important;
-    color: #b8b0ff !important; font-size: 13px !important;
+    border-radius: var(--radius) !important;
+    border: 1px solid var(--border) !important;
+    background: var(--bg-card2) !important;
 }
 
-/* ── Typography ── */
-p, li { color: #9898b8 !important; font-size: 14px !important; line-height: 1.75 !important; }
-strong, b { color: #c8c0ff !important; font-weight: 600 !important; }
-h1 { font-size: 28px !important; font-weight: 700 !important; color: #eeeeff !important;
-     letter-spacing: -.02em !important; }
-h2 { font-size: 20px !important; font-weight: 600 !important; color: #d8d8f0 !important; }
-h3 { font-size: 16px !important; font-weight: 600 !important; color: #c8c8e8 !important; }
-hr { border-color: rgba(255,255,255,0.05) !important; margin: 2rem 0 !important; }
-code, pre { font-family: 'DM Mono', monospace !important; }
+/* ── Spinner ── */
+[data-testid="stSpinner"] { color: var(--accent) !important; }
 
-/* ── Scrollbar ── */
-::-webkit-scrollbar { width: 3px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(124,106,245,0.22); border-radius: 99px; }
-::-webkit-scrollbar-thumb:hover { background: rgba(124,106,245,0.4); }
+/* ── Data fill progress ── */
+.progress-bar-wrap {
+    background: var(--bg-deep);
+    border-radius: 99px;
+    height: 6px;
+    margin-top: 6px;
+    overflow: hidden;
+}
+.progress-bar-fill {
+    height: 100%;
+    border-radius: 99px;
+    background: linear-gradient(90deg, var(--accent), #4299e1);
+    transition: width 0.4s ease;
+}
+.field-chip {
+    display: inline-block;
+    background: var(--accent-soft);
+    border: 1px solid var(--border);
+    color: var(--accent) !important;
+    font-size: 11px;
+    font-family: var(--font-mono);
+    padding: 3px 9px;
+    border-radius: 99px;
+    margin: 3px 3px 0 0;
+}
+.field-chip.missing {
+    background: rgba(252,129,129,0.1);
+    border-color: rgba(252,129,129,0.3);
+    color: var(--red) !important;
+}
 
-[data-testid="stHorizontalBlock"] { gap: 14px !important; }
-[data-testid="stSpinner"] svg { color: #7c6af5 !important; }
+/* ── Mode badge ── */
+.mode-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 99px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+.mode-badge.chat { background: rgba(72,187,120,0.15); color: #68d391; border: 1px solid rgba(72,187,120,0.3); }
+.mode-badge.cv   { background: rgba(246,201,14,0.15);  color: #f6e05e; border: 1px solid rgba(246,201,14,0.3); }
 </style>
 """, unsafe_allow_html=True)
 
 
-# ══════════════════════════════════════════════════════════
-# SESSION STATE
-# ══════════════════════════════════════════════════════════
-def _init():
-    defaults = {
-        "messages": [],
-        "career_data": {
-            "cgpa": None, "backlogs": None, "college_tier": None, "country": None,
-            "university_ranking_band": None, "internship_count": None,
-            "aptitude_score": None, "communication_score": None,
-            "specialization": None, "industry": None, "internship_quality_score": None,
-        },
-        "mode": None,
-        "prediction_result": None,
-        "cv_processed": False,
+# ─── STATE INIT ──────────────────────────────────────────────────────────────
+if "message" not in st.session_state:
+    st.session_state["message"] = [
+        {"role": "assistant", "content": "Xin chào! 👋 Tôi là **CareerAI** — trợ lý tư vấn sự nghiệp thông minh.\n\nHãy chọn phương thức bên dưới để bắt đầu phân tích lộ trình của bạn nhé!"}
+    ]
+if "career_data" not in st.session_state:
+    st.session_state["career_data"] = {
+        "cgpa": None, "backlogs": None, "college_tier": None, "country": None,
+        "university_ranking_band": None, "internship_count": None, "aptitude_score": None,
+        "communication_score": None, "specialization": None, "industry": None,
+        "internship_quality_score": None,
     }
-    for k, v in defaults.items():
-        if k not in st.session_state:
-            st.session_state[k] = v
-_init()
-
-FIELD_META = {
-    "cgpa":                    ("GPA",             "📈"),
-    "backlogs":                ("Môn nợ",          "📋"),
-    "college_tier":            ("Hạng trường",     "🏛"),
-    "country":                 ("Quốc gia",        "🌏"),
-    "university_ranking_band": ("Xếp hạng ĐH",    "🏆"),
-    "internship_count":        ("Số thực tập",     "💼"),
-    "aptitude_score":          ("Điểm tư duy",     "🧠"),
-    "communication_score":     ("Giao tiếp",       "🗣"),
-    "specialization":          ("Chuyên ngành",    "🎓"),
-    "industry":                ("Ngành nghề",      "🏭"),
-    "internship_quality_score":("Chất lượng TT",  "⭐"),
-}
-
-def missing_fields():
-    return [k for k, v in st.session_state.career_data.items() if v is None]
-
-def filled_count():
-    return sum(1 for v in st.session_state.career_data.values() if v is not None)
-
-def add_message(role, content):
-    st.session_state.messages.append({"role": role, "content": content})
+if "mode" not in st.session_state:
+    st.session_state["mode"] = None
 
 
-# ══════════════════════════════════════════════════════════
-# SIDEBAR
-# ══════════════════════════════════════════════════════════
+# ─── SIDEBAR ─────────────────────────────────────────────────────────────────
 with st.sidebar:
     st.markdown("""
-    <div style="display:flex;align-items:center;gap:10px;padding:0 4px 20px;
-                border-bottom:1px solid rgba(255,255,255,0.05);margin-bottom:20px;">
-        <div style="width:34px;height:34px;border-radius:10px;flex-shrink:0;
-                    background:linear-gradient(135deg,#5b4de0,#38bdf8);
-                    display:flex;align-items:center;justify-content:center;
-                    font-size:16px;box-shadow:0 0 0 1px rgba(91,77,224,0.35),
-                    0 4px 12px rgba(91,77,224,0.28);">✦</div>
-        <div>
-            <div style="font-size:13px;font-weight:700;color:#e8e8f8;
-                        font-family:'Bricolage Grotesque',sans-serif;line-height:1.1;">
-                Career Advisor
-            </div>
-            <div style="font-size:10px;color:#5b4de0;font-family:'DM Mono',monospace;
-                        letter-spacing:.04em;margin-top:1px;">AI · v2.0</div>
+    <div class="sidebar-logo">
+        <span class="icon">🤖</span>
+        <div class="brand">Career<span>AI</span></div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # Data status panel
+    total_fields = len(st.session_state["career_data"])
+    filled_fields = sum(1 for v in st.session_state["career_data"].values() if v is not None)
+    pct = int(filled_fields / total_fields * 100) if total_fields else 0
+
+    st.markdown(f"""
+    <div class="sidebar-section">
+        <h4>📊 Tiến độ thu thập dữ liệu</h4>
+        <div style="display:flex; justify-content:space-between; font-size:13px; margin-bottom:6px;">
+            <span style="color:var(--text-muted);">{filled_fields}/{total_fields} trường</span>
+            <span style="color:var(--accent); font-weight:600;">{pct}%</span>
+        </div>
+        <div class="progress-bar-wrap">
+            <div class="progress-bar-fill" style="width:{pct}%;"></div>
         </div>
     </div>
     """, unsafe_allow_html=True)
 
-    count = filled_count()
-    pct = count / 11
-    st.markdown(f"""
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-        <span style="font-size:10.5px;font-weight:600;color:#444460;text-transform:uppercase;
-                     letter-spacing:.08em;font-family:'Bricolage Grotesque',sans-serif;">
-            Hồ sơ
-        </span>
-        <span style="font-size:11px;color:{'#a59bff' if pct > 0 else '#333350'};
-                     font-family:'DM Mono',monospace;font-weight:500;">
-            {count}/11
-        </span>
-    </div>
-    """, unsafe_allow_html=True)
-    st.progress(pct)
-    st.markdown("<div style='height:14px'></div>", unsafe_allow_html=True)
+    # Field chips
+    chip_html = '<div class="sidebar-section"><h4>🗂️ Trạng thái trường dữ liệu</h4>'
+    label_map = {
+        "cgpa": "GPA", "backlogs": "Backlogs", "college_tier": "Tier",
+        "country": "Quốc gia", "university_ranking_band": "Xếp hạng ĐH",
+        "internship_count": "Số thực tập", "aptitude_score": "Aptitude",
+        "communication_score": "Giao tiếp", "specialization": "Chuyên ngành",
+        "industry": "Ngành", "internship_quality_score": "Chất lượng TT",
+    }
+    for k, v in st.session_state["career_data"].items():
+        cls = "" if v is not None else "missing"
+        icon = "✓" if v is not None else "○"
+        chip_html += f'<span class="field-chip {cls}">{icon} {label_map.get(k, k)}</span>'
+    chip_html += "</div>"
+    st.markdown(chip_html, unsafe_allow_html=True)
 
-    for field, (label, icon) in FIELD_META.items():
-        val = st.session_state.career_data[field]
-        if val is not None:
-            st.markdown(f"""
-            <div style="display:flex;align-items:center;gap:8px;padding:7px 10px;
-                        background:rgba(91,77,224,0.08);
-                        border:1px solid rgba(91,77,224,0.16);
-                        border-radius:10px;margin-bottom:5px;">
-                <span style="font-size:12px;width:18px;text-align:center;">{icon}</span>
-                <span style="font-size:12px;color:#7777a0;flex:1;
-                             font-family:'Bricolage Grotesque',sans-serif;">{label}</span>
-                <span style="font-size:11.5px;font-weight:600;color:#a59bff;
-                             font-family:'DM Mono',monospace;">{val}</span>
-            </div>
-            """, unsafe_allow_html=True)
-        else:
-            st.markdown(f"""
-            <div style="display:flex;align-items:center;gap:8px;padding:7px 10px;
-                        background:rgba(255,255,255,0.012);
-                        border:1px solid rgba(255,255,255,0.04);
-                        border-radius:10px;margin-bottom:5px;">
-                <span style="font-size:12px;width:18px;text-align:center;opacity:.2;">{icon}</span>
-                <span style="font-size:12px;color:#2e2e48;flex:1;
-                             font-family:'Bricolage Grotesque',sans-serif;">{label}</span>
-                <span style="font-size:10px;color:#252538;font-family:'DM Mono',monospace;">—</span>
-            </div>
-            """, unsafe_allow_html=True)
+    # CV upload
+    if st.session_state["mode"] == "CV":
+        st.markdown('<div class="sidebar-section"><h4>📄 Tải lên CV</h4>', unsafe_allow_html=True)
+        uploaded_file = st.file_uploader("Chọn file PDF", type=["pdf"], label_visibility="collapsed")
+        if uploaded_file and st.session_state["career_data"]["cgpa"] is None:
+            with st.spinner("Đang trích xuất CV..."):
+                files = {"file": (uploaded_file.name, uploaded_file, "application/pdf")}
+                try:
+                    response = requests.post(f"{BASE_URL}/api/chat/extract", files=files)
+                    if response.status_code == 200:
+                        st.session_state["career_data"].update(response.json())
+                        st.success("✅ Phân tích CV thành công!")
+                        st.rerun()
+                    else:
+                        st.error("Lỗi khi phân tích CV.")
+                except Exception as e:
+                    st.error(f"Không thể kết nối server: {e}")
+        st.markdown("</div>", unsafe_allow_html=True)
 
-    st.markdown("<div style='height:18px'></div>", unsafe_allow_html=True)
-    if st.button("↺  Bắt đầu lại", key="reset_btn", use_container_width=True):
-        for k in list(st.session_state.keys()):
-            del st.session_state[k]
+    # Reset
+    st.markdown("---")
+    if st.button("🔄 Làm mới & Chat lại", use_container_width=True):
+        st.session_state.clear()
         st.rerun()
 
-    st.markdown("""
-    <div style="margin-top:24px;padding:10px 12px;
-                background:rgba(255,255,255,0.015);
-                border:1px solid rgba(255,255,255,0.04);
-                border-radius:10px;text-align:center;">
-        <div style="font-size:9.5px;color:#252538;font-family:'DM Mono',monospace;
-                    letter-spacing:.06em;text-transform:uppercase;">
-            Powered by Stacking ML
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
 
-
-# ══════════════════════════════════════════════════════════
-# WELCOME SCREEN
-# ══════════════════════════════════════════════════════════
-if st.session_state.mode is None:
-    st.markdown("""
-    <div style="text-align:center;padding:52px 0 44px;">
-        <div style="display:inline-flex;align-items:center;justify-content:center;
-                    width:68px;height:68px;border-radius:20px;
-                    background:linear-gradient(135deg,#5b4de0 0%,#38bdf8 100%);
-                    font-size:26px;margin-bottom:22px;
-                    box-shadow:0 0 0 1px rgba(91,77,224,0.3),
-                               0 0 48px rgba(91,77,224,0.2),
-                               0 16px 40px rgba(0,0,0,0.5);">✦</div>
-
-        <div style="font-size:10.5px;font-weight:600;color:#5b4de0;text-transform:uppercase;
-                    letter-spacing:.16em;margin-bottom:14px;font-family:'DM Mono',monospace;">
-            Career Intelligence Platform
-        </div>
-
-        <div style="font-size:30px;font-weight:700;color:#eeeeff;
-                    letter-spacing:-.025em;margin:0 0 12px;line-height:1.2;
-                    font-family:'Bricolage Grotesque',sans-serif;">
-            Dự báo sự nghiệp<br>
-            <span style="background:linear-gradient(90deg,#a59bff 0%,#38bdf8 100%);
-                         -webkit-background-clip:text;-webkit-text-fill-color:transparent;">
-                bằng AI
-            </span>
-        </div>
-
-        <p style="font-size:13.5px;color:#444460;max-width:380px;margin:0 auto 44px;
-                  line-height:1.75;font-family:'Bricolage Grotesque',sans-serif;">
-            Phân tích hồ sơ sinh viên, dự báo xác suất có việc<br>
-            và mức lương dựa trên mô hình Stacking ML
-        </p>
-
-        <div style="display:flex;gap:14px;justify-content:center;flex-wrap:wrap;">
-            <div style="background:rgba(255,255,255,0.025);
-                        border:1px solid rgba(255,255,255,0.07);
-                        border-radius:20px;padding:26px 30px;width:210px;text-align:left;
-                        box-shadow:0 8px 32px rgba(0,0,0,0.3),inset 0 1px 0 rgba(255,255,255,0.05);">
-                <div style="font-size:28px;margin-bottom:14px;">💬</div>
-                <div style="font-size:14px;font-weight:600;color:#e0e0f8;margin-bottom:6px;
-                            font-family:'Bricolage Grotesque',sans-serif;">Chat tư vấn</div>
-                <div style="font-size:12px;color:#3a3a58;line-height:1.65;
-                            font-family:'Bricolage Grotesque',sans-serif;">
-                    AI hỏi từng bước,<br>bạn chỉ cần trả lời
-                </div>
-            </div>
-            <div style="background:rgba(255,255,255,0.025);
-                        border:1px solid rgba(255,255,255,0.07);
-                        border-radius:20px;padding:26px 30px;width:210px;text-align:left;
-                        box-shadow:0 8px 32px rgba(0,0,0,0.3),inset 0 1px 0 rgba(255,255,255,0.05);">
-                <div style="font-size:28px;margin-bottom:14px;">📄</div>
-                <div style="font-size:14px;font-weight:600;color:#e0e0f8;margin-bottom:6px;
-                            font-family:'Bricolage Grotesque',sans-serif;">Upload CV</div>
-                <div style="font-size:12px;color:#3a3a58;line-height:1.65;
-                            font-family:'Bricolage Grotesque',sans-serif;">
-                    Tải PDF lên, AI tự<br>trích xuất thông tin
-                </div>
-            </div>
-        </div>
-    </div>
-    <div style="height:8px"></div>
-    """, unsafe_allow_html=True)
-
-    col1, col2 = st.columns(2)
-    with col1:
-        if st.button("💬  Bắt đầu chat", key="btn_chat", use_container_width=True):
-            st.session_state.mode = "chat"
-            add_message("assistant",
-                "👋 **Xin chào!** Rất vui được đồng hành cùng bạn.\n\n"
-                "Để phân tích chính xác nhất, hãy chia sẻ:\n\n"
-                "- 🎓 **Trường đại học** bạn đang theo học?\n"
-                "- 💡 **Chuyên ngành** cụ thể?\n"
-                "- 📊 **GPA** hiện tại (thang 4 hay 10 đều được)?"
-            )
-            st.rerun()
-    with col2:
-        if st.button("📄  Upload CV PDF", key="btn_cv", use_container_width=True):
-            st.session_state.mode = "CV"
-            add_message("assistant",
-                "📎 **Tuyệt!** Hãy tải file CV (định dạng PDF) lên bên dưới.\n\n"
-                "Tôi sẽ tự động đọc và trích xuất toàn bộ thông tin cần thiết."
-            )
-            st.rerun()
-    st.stop()
-
-
-# ══════════════════════════════════════════════════════════
-# MODE BADGE
-# ══════════════════════════════════════════════════════════
-mode_label = "💬 Chế độ Chat" if st.session_state.mode == "chat" else "📄 Chế độ CV"
-missing = missing_fields()
-dot_color = "#22c55e" if not missing else "#5b4de0"
-status_text = "✓ Đủ thông tin" if not missing else f"{len(missing)} trường còn trống"
+# ─── MAIN CONTENT ────────────────────────────────────────────────────────────
+# Hero header
+mode_badge = ""
+if st.session_state["mode"] == "chat":
+    mode_badge = '<span class="mode-badge chat">● Chế độ Chat</span>'
+elif st.session_state["mode"] == "CV":
+    mode_badge = '<span class="mode-badge cv">● Chế độ CV</span>'
 
 st.markdown(f"""
-<div style="display:flex;align-items:center;justify-content:space-between;
-            padding:10px 16px;background:rgba(255,255,255,0.02);
-            border:1px solid rgba(255,255,255,0.055);border-radius:12px;
-            margin-bottom:22px;">
-    <div style="display:flex;align-items:center;gap:8px;">
-        <span style="font-size:12px;color:#555570;
-                     font-family:'Bricolage Grotesque',sans-serif;">{mode_label}</span>
-    </div>
-    <div style="display:flex;align-items:center;gap:6px;">
-        <span style="width:6px;height:6px;border-radius:50%;
-                     background:{dot_color};display:inline-block;
-                     box-shadow:0 0 6px {dot_color};"></span>
-        <span style="font-size:11px;font-family:'DM Mono',monospace;color:{dot_color};">
-            {status_text}
-        </span>
-    </div>
+<div class="hero">
+    <p class="hero-title">Khám phá lộ trình<br><span>sự nghiệp của bạn</span></p>
+    <p class="hero-sub">Hệ thống AI dự báo khả năng có việc & mức lương dựa trên Stacking ML + SHAP</p>
+    {f'<br>{mode_badge}' if mode_badge else ''}
 </div>
 """, unsafe_allow_html=True)
 
 
-# ══════════════════════════════════════════════════════════
-# CV UPLOAD
-# ══════════════════════════════════════════════════════════
-if st.session_state.mode == "CV" and not st.session_state.cv_processed:
-    st.markdown("""
-    <div style="margin-bottom:8px;">
-        <span style="font-size:11px;font-weight:600;color:#444460;text-transform:uppercase;
-                     letter-spacing:.09em;font-family:'Bricolage Grotesque',sans-serif;">
-            Tải CV lên
-        </span>
-    </div>
-    """, unsafe_allow_html=True)
-    uploaded_file = st.file_uploader("cv_upload", type=["pdf"], label_visibility="collapsed")
-    if uploaded_file:
-        with st.spinner("Đang phân tích CV..."):
+# ─── MODE SELECTION ───────────────────────────────────────────────────────────
+if st.session_state["mode"] is None:
+    col1, col2 = st.columns(2, gap="large")
+    with col1:
+        st.markdown("### 📁 Đã có CV sẵn")
+        st.markdown('<p style="color:var(--text-muted); font-size:0.9rem;">Tải file PDF lên, AI sẽ tự động đọc và phân tích thông tin của bạn.</p>', unsafe_allow_html=True)
+        if st.button("📂  Dùng CV của tôi", use_container_width=True, key="btn_cv"):
+            st.session_state["mode"] = "CV"
+            st.session_state["message"].append({
+                "role": "assistant",
+                "content": "📂 Tuyệt vời! Hãy tải file **CV (PDF)** của bạn lên ở thanh bên trái nhé.\n\nSau khi phân tích xong, tôi sẽ hỏi thêm những thông tin còn thiếu."
+            })
+            st.rerun()
+    with col2:
+        st.markdown("### 💬 Muốn chat trực tiếp")
+        st.markdown('<p style="color:var(--text-muted); font-size:0.9rem;">Trả lời một vài câu hỏi ngắn, AI sẽ thu thập đủ thông tin để phân tích.</p>', unsafe_allow_html=True)
+        if st.button("🗨️  Bắt đầu chat", use_container_width=True, key="btn_chat"):
+            st.session_state["mode"] = "chat"
+            st.session_state["message"].append({
+                "role": "assistant",
+                "content": """👋 **Chào bạn! Rất vui được đồng hành cùng bạn giải mã lộ trình sự nghiệp.**
+
+Để phân tích chính xác nhất, bạn hãy chia sẻ:
+* 🎓 **Trường đại học** bạn đang theo học?
+* 💻 **Chuyên ngành** cụ thể?
+* 📈 **Điểm GPA** hiện tại (thang 4 hoặc thang 10)?
+
+Tôi đang đợi tin từ bạn!"""
+            })
+            st.rerun()
+
+    st.stop()
+
+
+# ─── CHAT DISPLAY ─────────────────────────────────────────────────────────────
+chat_container = st.container()
+with chat_container:
+    for msg in st.session_state["message"]:
+        with st.chat_message(msg["role"]):
+            st.markdown(msg["content"])
+
+
+# ─── CHAT INPUT ───────────────────────────────────────────────────────────────
+missing_fields = [k for k, v in st.session_state["career_data"].items() if v is None]
+
+if "prediction_result" not in st.session_state:
+    if prompt := st.chat_input("Nhập câu trả lời hoặc câu hỏi của bạn..."):
+        st.session_state["message"].append({"role": "user", "content": prompt})
+        with st.spinner("Đang xử lý..."):
+            payload = {
+                "message": prompt,
+                "current_data": st.session_state["career_data"]
+            }
             try:
-                files = {"file": (uploaded_file.name, uploaded_file, "application/pdf")}
-                response = requests.post(f"{BASE_URL}/api/chat/extract", files=files)
+                response = requests.post(f"{BASE_URL}/api/handle_chat", json=payload)
                 if response.status_code == 200:
-                    st.session_state.career_data.update(response.json())
-                    st.session_state.cv_processed = True
-                    n = filled_count()
-                    rem = 11 - n
-                    add_message("assistant",
-                        f"✅ **CV đã được phân tích!** Trích xuất **{n}/11** thông tin.\n\n"
-                        + (f"Còn **{rem} trường** cần bổ sung — nhập tiếp vào chat nhé."
-                           if rem > 0 else "🎉 Đã đủ dữ liệu! Nhấn nút dự báo bên dưới.")
-                    )
-                    st.rerun()
+                    result = response.json()
+                    for field, value in result.items():
+                        if field in st.session_state["career_data"] and value is not None:
+                            st.session_state["career_data"][field] = value
+                    if result.get("next_question"):
+                        st.session_state["message"].append({
+                            "role": "assistant",
+                            "content": result.get("next_question", "")
+                        })
+                    if result.get("is_complete"):
+                        st.session_state["message"].append({
+                            "role": "assistant",
+                            "content": "🎉 **Cảm ơn bạn đã cung cấp đầy đủ thông tin!**\n\nNhấn nút **Xem dự báo ngay** bên dưới để tôi chạy mô hình Stacking ML và phân tích kết quả cho bạn."
+                        })
                 else:
-                    st.error("Lỗi khi đọc CV. Vui lòng thử lại.")
+                    st.error("Lỗi kết nối server. Vui lòng thử lại.")
             except Exception as e:
-                st.error(f"Không kết nối được server: {e}")
-    st.markdown("<div style='height:10px'></div>", unsafe_allow_html=True)
+                st.session_state["message"].append({
+                    "role": "assistant",
+                    "content": f"⚠️ Không thể kết nối đến server: `{e}`"
+                })
+        st.rerun()
 
 
-# ══════════════════════════════════════════════════════════
-# CHAT HISTORY
-# ══════════════════════════════════════════════════════════
-for msg in st.session_state.messages:
-    with st.chat_message(msg["role"]):
-        st.markdown(msg["content"])
-
-
-# ══════════════════════════════════════════════════════════
-# PREDICT CTA
-# ══════════════════════════════════════════════════════════
-if st.session_state.mode and not missing_fields() and st.session_state.prediction_result is None:
-    st.markdown("""
-    <div style="background:linear-gradient(135deg,rgba(91,77,224,0.1) 0%,rgba(56,189,248,0.05) 100%);
-                border:1px solid rgba(91,77,224,0.2);border-radius:18px;
-                padding:20px 22px;margin:20px 0;
-                box-shadow:inset 0 1px 0 rgba(255,255,255,0.05),0 8px 32px rgba(0,0,0,0.25);">
-        <div style="display:flex;align-items:center;gap:14px;">
-            <div style="width:44px;height:44px;border-radius:13px;flex-shrink:0;
-                        background:linear-gradient(135deg,#5b4de0,#38bdf8);
-                        display:flex;align-items:center;justify-content:center;
-                        font-size:20px;box-shadow:0 4px 16px rgba(91,77,224,0.45);">🎯</div>
-            <div>
-                <div style="font-size:14px;font-weight:600;color:#e8e8f8;
-                            font-family:'Bricolage Grotesque',sans-serif;margin-bottom:3px;">
-                    Đã sẵn sàng phân tích!
-                </div>
-                <div style="font-size:12px;color:#444460;font-family:'Bricolage Grotesque',sans-serif;">
-                    11/11 thông tin đã được thu thập đầy đủ
-                </div>
-            </div>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
-
-    if st.button("⚡  Chạy mô hình & Xem dự báo", key="predict_btn", use_container_width=True):
-        with st.spinner("Đang chạy Stacking ML model..."):
+# ─── PREDICT BUTTON ───────────────────────────────────────────────────────────
+if st.session_state["mode"] and not missing_fields and "prediction_result" not in st.session_state:
+    st.markdown("---")
+    st.info("🎉 Đã thu thập đủ thông tin! Nhấn nút bên dưới để xem dự báo sự nghiệp.")
+    if st.button("🚀  XEM DỰ BÁO NGAY", use_container_width=True):
+        with st.spinner("Đang chạy mô hình Stacking ML..."):
             try:
-                res = requests.post(f"{BASE_URL}/api/predict", json=st.session_state.career_data)
+                res = requests.post(f"{BASE_URL}/api/predict", json=st.session_state["career_data"])
                 if res.status_code == 200:
-                    st.session_state.prediction_result = res.json()
-                    add_message("assistant", "✅ **Mô hình hoàn tất!** Kết quả hiển thị bên dưới.")
+                    st.session_state["prediction_result"] = res.json()
                     st.rerun()
                 else:
-                    st.error("Lỗi từ server dự báo.")
+                    st.error("Lỗi khi chạy mô hình dự báo.")
             except Exception as e:
-                st.error(f"Không thể kết nối: {e}")
+                st.error(f"Không thể kết nối server: {e}")
 
 
-# ══════════════════════════════════════════════════════════
-# PREDICTION RESULTS
-# ══════════════════════════════════════════════════════════
-if st.session_state.prediction_result:
-    res = st.session_state.prediction_result
+# ─── RESULTS ─────────────────────────────────────────────────────────────────
+if "prediction_result" in st.session_state:
+    res = st.session_state["prediction_result"]
+    st.markdown("---")
+
+    # Metrics
+    col1, col2, col3 = st.columns(3)
     prob = res.get("probability", 0)
     salary = res.get("estimated_salary", 0)
-
-    st.markdown("""
-    <div style="display:flex;align-items:center;gap:12px;margin:28px 0 18px;">
-        <div style="flex:1;height:1px;background:rgba(255,255,255,0.05);"></div>
-        <span style="font-size:10px;font-weight:600;color:#2a2a42;text-transform:uppercase;
-                     letter-spacing:.14em;font-family:'DM Mono',monospace;">Kết quả dự báo</span>
-        <div style="flex:1;height:1px;background:rgba(255,255,255,0.05);"></div>
-    </div>
-    """, unsafe_allow_html=True)
-
-    col1, col2 = st.columns(2)
+    verdict = "Cao" if prob >= 0.7 else ("Trung bình" if prob >= 0.4 else "Thấp")
     with col1:
-        st.metric("🎯 Xác suất có việc", f"{prob * 100:.1f}%")
+        st.metric("🎯 Xác suất có việc", f"{prob*100:.1f}%")
     with col2:
-        st.metric("💰 Lương dự kiến", f"${salary:,.0f} /tháng")
+        st.metric("💰 Lương dự kiến", f"${salary:,}/tháng")
+    with col3:
+        st.metric("📊 Mức đánh giá", verdict)
 
-    # SHAP Chart
-    TARGET = [
-        "cgpa","backlogs","college_tier","country","university_ranking_band",
-        "internship_count","aptitude_score","communication_score",
-        "specialization","industry","internship_quality_score"
+    # SHAP Waterfall chart
+    st.markdown("### 🔍 Phân tích yếu tố ảnh hưởng (SHAP)")
+
+    target_features = [
+        "cgpa", "backlogs", "college_tier", "country",
+        "university_ranking_band", "internship_count", "aptitude_score",
+        "communication_score", "specialization", "industry", "internship_quality_score"
     ]
-    LABEL = {k: v[0] for k, v in FIELD_META.items()}
+    label_map_chart = {
+        "cgpa": "GPA", "backlogs": "Backlogs", "college_tier": "Tier trường",
+        "country": "Quốc gia", "university_ranking_band": "Xếp hạng ĐH",
+        "internship_count": "Số lần TT", "aptitude_score": "Aptitude",
+        "communication_score": "Giao tiếp", "specialization": "Chuyên ngành",
+        "industry": "Ngành nghề", "internship_quality_score": "Chất lượng TT",
+    }
 
     features = res.get("explanations", {}).get("placement", {}).get("all_features", [])
     if features:
-        df = pd.DataFrame(features)
-        df = df[df["name"].isin(TARGET)].copy()
-        df["abs"] = df["value"].abs()
-        df = df.sort_values("abs", ascending=False)
+        df_all = pd.DataFrame(features)
+        df_plot = df_all[df_all["name"].isin(target_features)].copy()
+        df_plot["abs_value"] = df_plot["value"].abs()
+        df_plot = df_plot.sort_values("abs_value", ascending=True)
+        df_plot["label"] = df_plot["name"].map(label_map_chart).fillna(df_plot["name"])
+
+        colors = ["#48bb78" if v >= 0 else "#fc8181" for v in df_plot["value"]]
 
         fig = go.Figure()
         fig.add_trace(go.Bar(
-            x=[LABEL.get(n, n) for n in df["name"]],
-            y=df["value"],
+            x=df_plot["value"],
+            y=df_plot["label"],
+            orientation="h",
             marker=dict(
-                color=["#7c6af5" if v >= 0 else "#f87171" for v in df["value"]],
-                opacity=0.85,
-                line=dict(width=0),
+                color=colors,
+                line=dict(color="rgba(255,255,255,0.08)", width=1)
             ),
-            text=[f"{v:+.2f}" for v in df["value"]],
+            text=[f"{v:+.3f}" for v in df_plot["value"]],
             textposition="outside",
-            textfont=dict(family="DM Mono", size=10, color="#444460"),
+            textfont=dict(family="JetBrains Mono", size=11, color="#a0aec0"),
         ))
-
         fig.update_layout(
-            title=dict(
-                text="Mức độ ảnh hưởng của từng yếu tố (SHAP values)",
-                font=dict(family="Bricolage Grotesque", size=12.5, color="#555570"),
-                x=0, pad=dict(b=12)
-            ),
             paper_bgcolor="rgba(0,0,0,0)",
             plot_bgcolor="rgba(0,0,0,0)",
-            font=dict(family="Bricolage Grotesque", color="#555570", size=11),
-            height=320,
-            showlegend=False,
-            margin=dict(t=48, b=12, l=0, r=0),
+            font=dict(family="DM Sans", color="#a0aec0"),
+            height=420,
+            margin=dict(l=20, r=80, t=20, b=20),
             xaxis=dict(
-                gridcolor="rgba(255,255,255,0.03)",
-                tickfont=dict(size=10.5, color="#444460"),
-                showline=False, zeroline=False,
+                showgrid=True,
+                gridcolor="rgba(99,179,237,0.08)",
+                zeroline=True,
+                zerolinecolor="rgba(99,179,237,0.3)",
+                zerolinewidth=1.5,
+                tickfont=dict(family="JetBrains Mono", size=10),
             ),
             yaxis=dict(
-                gridcolor="rgba(255,255,255,0.03)",
-                tickfont=dict(size=9.5, color="#333350", family="DM Mono"),
-                showline=False,
-                zeroline=True, zerolinecolor="rgba(255,255,255,0.07)", zerolinewidth=1,
+                showgrid=False,
+                tickfont=dict(size=12),
             ),
-            bargap=0.38,
+            bargap=0.35,
         )
+        st.plotly_chart(fig, use_container_width=True)
 
-        st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
-
-    # Advice cards
-    with st.expander("💡  Gợi ý cải thiện hồ sơ"):
-        cd = st.session_state.career_data
-        items = []
-        if cd.get("cgpa") and float(cd["cgpa"]) < 3.0:
-            items.append(("📚", "Cải thiện GPA",
-                "GPA hiện còn thấp. Hãy tập trung vào các môn còn lại để nâng điểm tích lũy."))
-        if cd.get("backlogs") and int(cd["backlogs"]) > 0:
-            items.append(("⚠️", "Xử lý môn nợ",
-                "Hoàn thành các môn nợ trước khi apply — nhiều nhà tuyển dụng yêu cầu tốt nghiệp đúng hạn."))
-        if cd.get("internship_count") and int(cd["internship_count"]) < 2:
-            items.append(("🏢", "Tăng kinh nghiệm thực tập",
-                "Mục tiêu ít nhất 2–3 kỳ thực tập ở các công ty liên quan đến ngành bạn theo học."))
-        if cd.get("communication_score") and float(cd["communication_score"]) < 7:
-            items.append(("🗣", "Rèn kỹ năng giao tiếp",
-                "Tham gia câu lạc bộ, thuyết trình hoặc khóa học soft skills để cải thiện điểm này."))
-        if not items:
-            items.append(("🌟", "Hồ sơ rất tốt!",
-                "Bạn đang ở vị thế rất tốt. Hãy polish CV và chuẩn bị kỹ cho vòng phỏng vấn."))
-
-        for icon, title, desc in items:
-            st.markdown(f"""
-            <div style="display:flex;gap:14px;padding:14px 16px;
-                        background:rgba(255,255,255,0.018);
-                        border:1px solid rgba(255,255,255,0.05);
-                        border-radius:12px;margin-bottom:8px;
-                        transition:border-color .2s;">
-                <div style="font-size:18px;flex-shrink:0;padding-top:1px;">{icon}</div>
-                <div>
-                    <div style="font-size:13px;font-weight:600;color:#c0b8ff;
-                                margin-bottom:4px;font-family:'Bricolage Grotesque',sans-serif;">
-                        {title}
-                    </div>
-                    <div style="font-size:12px;color:#444460;line-height:1.65;
-                                font-family:'Bricolage Grotesque',sans-serif;">
-                        {desc}
-                    </div>
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
-
-
-# ══════════════════════════════════════════════════════════
-# CHAT INPUT
-# ══════════════════════════════════════════════════════════
-placeholder = (
-    "Nhập câu trả lời của bạn..."
-    if st.session_state.mode == "chat"
-    else "Hỏi thêm hoặc bổ sung thông tin..."
-)
-
-if prompt := st.chat_input(placeholder):
-    add_message("user", prompt)
-    with st.chat_message("user"):
-        st.markdown(prompt)
-
-    with st.spinner(""):
-        payload = {"message": prompt, "current_data": st.session_state.career_data}
-        try:
-            response = requests.post(f"{BASE_URL}/api/handle_chat", json=payload)
-            if response.status_code == 200:
-                result = response.json()
-                for field, value in result.items():
-                    if field in st.session_state.career_data and value is not None:
-                        st.session_state.career_data[field] = value
-
-                reply = result.get("next_question", "")
-                if result.get("is_complete"):
-                    suffix = "\n\n🎉 **Đã đủ thông tin!** Cuộn xuống và nhấn **⚡ Xem dự báo** nhé."
-                    reply = reply + suffix if reply else suffix.strip()
-
-                if reply:
-                    add_message("assistant", reply)
-                    with st.chat_message("assistant"):
-                        st.markdown(reply)
-            else:
-                err = "❌ Đã có lỗi. Vui lòng thử lại."
-                add_message("assistant", err)
-                with st.chat_message("assistant"):
-                    st.markdown(err)
-        except Exception as e:
-            err = f"❌ Không thể kết nối server: `{e}`"
-            add_message("assistant", err)
-            with st.chat_message("assistant"):
-                st.markdown(err)
-    st.rerun()
+        # Legend
+        st.markdown("""
+        <div style="display:flex; gap:20px; font-size:12px; color:var(--text-muted); margin-top:-8px; padding-left:4px;">
+            <span><span style="color:#48bb78;">■</span> Tác động tích cực (tăng xác suất)</span>
+            <span><span style="color:#fc8181;">■</span> Tác động tiêu cực (giảm xác suất)</span>
+        </div>
+        """, unsafe_allow_html=True)
+    else:
+        st.info("Không có dữ liệu SHAP để hiển thị.")

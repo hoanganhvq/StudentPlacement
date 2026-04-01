@@ -5,6 +5,7 @@ from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
 import os
 from dotenv import load_dotenv
+from openai import api_key
 from app.langchain_logic.prompts import CV_EXTRACT_PROMPT_TEMPLATE as CV_EXTRACT_PROMPT
 from app.langchain_logic.parser import parser
 
@@ -13,9 +14,14 @@ load_dotenv()
 class LangChainService:
     def __init__(self):
         self.llm = ChatOpenAI(
-            model = "gpt-4o-mini", # You can choose other models like "gemini-2.0-flash" or "gemini-1.5-pro" based on your needs
-            openai_api_key = os.getenv("GEMENI_API_KEY"),
-            temperature = 1 # Adjust temperature lower to make the output more deterministic, or higher for more creativity
+            model="google/gemini-2.5-flash", # Thêm prefix 'google/' theo chuẩn OpenRouter
+            openai_api_base="https://openrouter.ai/api/v1",
+            openai_api_key=os.getenv("OPEN_ROUTER"),
+            temperature=1,
+            default_headers={
+                "HTTP-Referer": "http://localhost:3000", # Tùy chọn: Để OpenRouter xếp hạng app của bạn
+                "X-Title": "Career Advisory System"      # Tùy chọn
+            }
         )
         prompt_template = ChatPromptTemplate.from_template(CV_EXTRACT_PROMPT)
         self.chain = prompt_template | self.llm | parser

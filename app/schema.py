@@ -16,8 +16,8 @@ class CareerInputChat(BaseModel):
     internship_quality_score: Optional[float] = Field(ge=1, le=10, description="Điểm đánh giá chất lượng thực tập từ 1 đến 10", default=None)
     
     next_question: Optional[Optional[str]] = Field(description="Câu hỏi tự nhiên để thu thập các thông tin còn thiếu", default="Bạn có thể cho tớ biết thêm thông tin không?")
-    is_off_topic: bool = Field(default=False)
-    analysis_feedback: str = Field(default="")
+    # is_off_topic: bool = Field(default=False)
+    # analysis_feedback: str = Field(default="")
     is_complete: bool = Field(description="True nếu đã thu thập đủ 11 trường dữ liệu", default=False)
 
 class CareerInputPredict(BaseModel):
