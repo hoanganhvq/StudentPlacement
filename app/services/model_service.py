@@ -182,11 +182,13 @@ class ModelService:
 
         is_placed = 1 if proba_placed > self.optimal_threshold else 0
         estimated_salary = 0.0
+        ai_insights_reg = []
 
         cls_advice = self.career_explainer.get_chatbot_adivce_data(X_cls)
         ai_insights_cls = self.generate_natural_insights_cls(cls_advice)
         # print("CLS Advice:", cls_advice)
         reg_advice = None
+        print("is_place", is_placed)
         if is_placed == 1:
             X_reg = self.handle_data_reg(input_data)
 

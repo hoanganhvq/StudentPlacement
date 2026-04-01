@@ -26,6 +26,7 @@ async def root():
 @app.post("/api/predict", response_model=PredictionResponse)
 async def predict_career(data: CareerInputPredict):
     try:
+        print("Return ok: ")
         result = model_service.predict(data)
         print("Return ok: ")
         print(result)
@@ -42,22 +43,25 @@ async def extract_info(file: UploadFile = File(None), message: str = None):
     
     content = ""
     if file:
+        print("Doc duoc file toi file main roi")
         pdf_data = await file.read()
         doc = fitz.open(stream=pdf_data, filetype="pdf")
         content = " ".join([page.get_text() for page in doc])
+        print("content: ", content)
     elif message:
         content = message
 
-    result = langchain_service.process_input(content)
+    result = langchain_service.process_input_pdf(content)
     return result
 
 @app.post("/api/handle_chat")
 async def handle_chat(data: ChatInput):
     try:
-    
+        print("Message : ", data.message)
+        print("Missing  field: ", data.missing_field);
         result = langchain_service.process_input(
             text_content="",
-            current_data=data.current_data.dict(), # Chuyển pydantic sang dict
+            missing_field=data.missing_field, # Chuyển pydantic sang dict
             user_msg=data.message
         )
         return result
