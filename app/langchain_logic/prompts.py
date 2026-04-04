@@ -86,6 +86,8 @@ Nhiệm vụ của bạn là đọc toàn bộ nội dung văn bản dưới đ�
    - Trường thuộc top toàn cầu -> "Top 100".
    - Trường khá, có tiếng tăm -> "100-300".
    - Các trường còn lại -> "300+".
+- **country**: Chỉ được chọn 1 trong: [Germany, USA, UK, Canada, India]. Nếu người dùng chọn quốc gia khác, hãy chọn nước có nền kinh tế tương đồng nhất trong danh sách (Ví dụ: Việt Nam -> India).
+
 - **Thực tập (internship_count & quality score)**: 
     - Đếm số lượng công ty đã thực tập. 
     - `internship_quality_score`: Chấm từ 1-10. Công ty toàn cầu/Big Tech: 9-10. Công ty lớn trong nước: 7-8. Startup/Local nhỏ: 5-6. Nếu `internship_count` = 0, set score = 4.

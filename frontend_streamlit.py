@@ -106,8 +106,7 @@ with st.sidebar:
                             st.session_state["message"].append({"role": "assistant", "content": result.get("next_question")})
                         st.rerun()
                 except:
-                    st.error("Không thể kết nối đến Server.")
-
+                    pass
 
 # --- MAIN CHAT INTERFACE ---
 chat_container = st.container(height=450 if "prediction_result" not in st.session_state else 250)
@@ -166,6 +165,7 @@ if st.session_state["mode"] and not missing_fields:
                 res = requests.post(f"{BASE_URL}/api/predict", json=st.session_state["career_data"])
                 if res.status_code == 200:
                     st.session_state["prediction_result"] = res.json()
+                    print("result prediction: ", res.json())
                     st.rerun()
 
 if "prediction_result" in st.session_state:
@@ -176,14 +176,26 @@ if "prediction_result" in st.session_state:
     st.subheader("📊 Kết quả dự báo chuyên sâu")
     m_col1, m_col2, m_col3 = st.columns(3)
     
-    with m_col1:
-        st.markdown(f"""<div class='metric-card'><p style='color:gray;'>Tỉ lệ trúng tuyển</p><h2>{res['probability']*100:.1f}%</h2></div>""", unsafe_allow_html=True)
     with m_col2:
-        st.markdown(f"""<div class='metric-card'><p style='color:gray;'>Lương khởi điểm kỳ vọng</p><h2>${res['estimated_salary']:,}</h2></div>""", unsafe_allow_html=True)
+        # Format lương có dấu phẩy ngăn cách hàng nghìn
+        st.markdown(f"""<div class='metric-card'>
+            <p style='color: #6c757d;'>Lương khởi điểm/năm</p>
+            <h2 style='color: #007bff;'>${res['estimated_salary']:,}</h2>
+        </div>""", unsafe_allow_html=True)
+    with m_col2:
+        st.markdown(f"""<div class='metric-card'><p style='color:black;'>Lương khởi điểm kỳ vọng/năm</p><h2>${res['estimated_salary']:,}</h2></div>""", unsafe_allow_html=True)
     with m_col3:
-        status = "Rất khả quan" if res['probability'] > 0.7 else "Cần nỗ lực thêm"
-        st.markdown(f"""<div class='metric-card'><p style='color:gray;'>Đánh giá chung</p><h2>{status}</h2></div>""", unsafe_allow_html=True)
+        if res['probability'] > 0.7:
+            status, color = "Rất khả quan", "#28a745" # Xanh lá
+        elif res['probability'] > 0.4:
+            status, color = "Tiềm năng", "#ffc107"    # Vàng
+        else:
+            status, color = "Cần nỗ lực thêm", "#dc3545" # Đỏ
 
+        st.markdown(f"""<div class='metric-card'>
+            <p style='color: #6c757d;'>Đánh giá chung</p>
+            <h2 style='color: {color};'>{status}</h2>
+        </div>""", unsafe_allow_html=True)
     # Visualization
     st.write("")
     col_graph, col_advice = st.columns([2, 1])
@@ -206,12 +218,27 @@ if "prediction_result" in st.session_state:
         st.plotly_chart(fig, use_container_width=True)
 
     with col_advice:
-        st.markdown("### 💡 Lời khuyên cho bạn")
-        if res['probability'] < 0.6:
-            st.warning("- Hãy cải thiện điểm Aptitude Test.\n- Tìm kiếm thêm ít nhất 1 kỳ thực tập chuyên ngành.")
-        else:
-            st.success("- Hồ sơ của bạn rất mạnh!\n- Tập trung vào kỹ năng thương lượng lương.")
+        st.markdown("### 💡 Phân tích từ AI")
         
-        if st.button("🔄 Làm lại từ đầu", use_container_width=True):
-            st.session_state.clear()
+        # 1. Gán AI Insights về Việc làm (Placement)
+        if res.get('ai_insights_placement'):
+            st.write("**Cơ hội nghề nghiệp:**")
+            for insight in res['ai_insights_placement']:
+                st.info(f"✨ {insight}")
+        
+        # 2. Gán AI Insights về Lương (Salary)
+        if res.get('ai_insights_salary'):
+            st.write("**Góc nhìn về thu nhập:**")
+            for s_insight in res['ai_insights_salary']:
+                st.success(f"💰 {s_insight}")
+
+        st.divider()
+        
+        # Nút chức năng
+        if st.button("🔄 Thực hiện đánh giá mới", use_container_width=True, type="primary"):
+            # Xóa các state liên quan đến form nhưng giữ lại message nếu cần chat tiếp
+            keys_to_clear = ["prediction_result", "career_data"]
+            for key in keys_to_clear:
+                if key in st.session_state:
+                    del st.session_state[key]
             st.rerun()
