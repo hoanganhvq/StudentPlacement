@@ -134,14 +134,12 @@ class ModelOptimizer:
 
 def run_optuna_for_model(model_name, X_train, y_train):
     optimizer = ModelOptimizer(X_train, y_train)
-    
     # Map tên model với hàm objective tương ứng
     mapping = {
         'XGBoost': optimizer.objective_xgb,
         'Random Forest': optimizer.objective_rf,
         'Logistic Regression': optimizer.objective_lr,
         'KNN': optimizer.objective_knn,
-
         'Ridge Regression': optimizer.objective_ridge,
         'XGBoost Regression': optimizer.objective_xgb_reg,
         'Random Forest Regression': optimizer.objective_rf_reg

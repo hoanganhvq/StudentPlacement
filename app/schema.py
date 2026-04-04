@@ -51,7 +51,6 @@ class ChatInput(BaseModel):
     missing_field: List[str]
 
 
-
 #Du lie tra ra
 class FeatureImpace(BaseModel):
     name: str

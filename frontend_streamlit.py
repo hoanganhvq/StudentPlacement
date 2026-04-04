@@ -2,13 +2,48 @@ import streamlit as st
 import requests
 import pandas as pd
 import plotly.graph_objects as go
+from datetime import datetime
+
+# --- CONFIG & STYLING ---
+st.set_page_config(page_title="Career AI | Tư vấn sự nghiệp", layout="wide", page_icon="🚀")
+
+# Inject Custom CSS để làm giao diện mềm mại hơn
+st.markdown("""
+    <style>
+    /* Gradient Background cho Header */
+    .main-header {
+        background: linear-gradient(90deg, #4b6cb7 0%, #182848 100%);
+        padding: 20px;
+        border-radius: 15px;
+        color: white;
+        text-align: center;
+        margin-bottom: 25px;
+    }
+    /* Card style cho các chỉ số */
+    .metric-card {
+        background-color: #ffffff;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        border: 1px solid #eee;
+    }
+    /* Custom button style */
+    .stButton>button {
+        border-radius: 20px;
+        transition: all 0.3s ease;
+    }
+    .stButton>button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
 BASE_URL = "http://localhost:8000"
 
-st.set_page_config(page_title="Student Placement Dashboard", layout="wide")
-
-# 1. Khởi tạo bộ nhớ
+# --- INITIALIZATION ---
 if "message" not in st.session_state:
-    st.session_state["message"] = [{"role": "assistant", "content": "Chào Phan! Tớ là trợ lý tư vấn sự nghiệp.Chúng ta sẽ chat để lấy thông tin nhaaaa?"}]
+    st.session_state["message"] = [{"role": "assistant", "content": "👋 Chào bạn! Tớ là trợ lý ảo Career AI. Tớ sẽ giúp bạn dự báo khả năng có việc làm và mức lương dựa trên profile của bạn."}]
 
 if "career_data" not in st.session_state:
     st.session_state["career_data"] = {
@@ -20,189 +55,163 @@ if "career_data" not in st.session_state:
 if "mode" not in st.session_state:
     st.session_state["mode"] = None
 
-print("Chay lai tu dau")
+# --- HEADER ---
+st.markdown('<div class="main-header"><h1>🤖 Career Advisory Hybrid System</h1><p>Phân tích CV & Dự báo lộ trình nghề nghiệp bằng AI</p></div>', unsafe_allow_html=True)
 
-st.title("🤖 Career Advisory Hybrid System")
-
-# Chọn chế độ
+# --- MODE SELECTION ---
 if st.session_state["mode"] is None:
+    st.subheader("Bắt đầu bằng cách nào?")
     col1, col2 = st.columns(2)
     with col1:
-        if st.button("📁 Tôi có sẵn CV", use_container_width=True):
-            st.session_state["mode"] = "CV"
-            st.session_state["message"].append({"role": "assistant", "content": "Tuyệt! Hãy tải file CV của bạn ở thanh bên trái (Sidebar) nhé."})
-            st.rerun()
+        with st.container():
+            st.info("### 📄 Tải lên CV\nAI sẽ tự động đọc thông tin từ file PDF của bạn.")
+            if st.button("Sử dụng CV có sẵn", use_container_width=True):
+                st.session_state["mode"] = "CV"
+                st.session_state["message"].append({"role": "assistant", "content": "Tuyệt! Hãy tải file CV của bạn ở thanh bên trái (Sidebar) nhé."})
+                st.rerun()
     with col2:
-        if st.button("💬 Tôi muốn chat", use_container_width=True):
-            st.session_state["mode"] = "chat"
-            
-            welcome_content = """
-            👋 **Chào bạn! Rất vui được đồng hành cùng bạn giải mã lộ trình sự nghiệp.**
+        with st.container():
+            st.success("### 💬 Chat trực tiếp\nCung cấp thông tin qua việc trò chuyện cùng AI.")
+            if st.button("Bắt đầu Chat ngay", use_container_width=True):
+                st.session_state["mode"] = "chat"
+                welcome_content = "💡 **Hãy chia sẻ một chút về học vấn của bạn:**\n* Bạn học trường nào?\n* Chuyên ngành của bạn là gì?"
+                st.session_state["message"].append({"role": "assistant", "content": welcome_content})
+                st.rerun()
 
-            Để tớ có thể phân tích chính xác nhất, bạn chia sẻ cho tớ một chút về:
-            * 🎓 **Trường đại học** bạn đang theo học là gì?
-            * 💻 **Chuyên ngành** cụ thể của bạn?
-            * 📈 **Điểm GPA** hiện tại của bạn là bao nhiêu (thang 4 hay thang 10 đều được nhé)?
-
-            Tớ đang đợi tin từ bạn đây!
-            """
-            
-            st.session_state["message"].append({
-                "role": "assistant", 
-                "content": welcome_content
-            })            
-            st.rerun()
-# 2. Sidebar xử lý PDF
+# --- SIDEBAR & DATA PROGRESS ---
 with st.sidebar:
+    st.image("https://cdn-icons-png.flaticon.com/512/3135/3135715.png", width=100)
+    st.title("Hồ sơ của bạn")
+    
+    # Progress Bar theo dõi tiến độ điền form
+    filled_fields = sum(1 for v in st.session_state["career_data"].values() if v is not None)
+    progress = filled_fields / len(st.session_state["career_data"])
+    st.write(f"Độ hoàn thiện: {int(progress*100)}%")
+    st.progress(progress)
+    
     if st.session_state["mode"] == "CV":
-        st.header("Upload CV")
-        uploaded_file = st.file_uploader("Chọn file CV (PDF)", type=["pdf"])
-        # Chỉ gọi API extract nếu chưa có dữ liệu nào (cgpa là trường đại diện)
+        st.divider()
+        st.header("📤 Tải CV tại đây")
+        uploaded_file = st.file_uploader("Định dạng hỗ trợ: PDF", type=["pdf"])
         if uploaded_file and st.session_state["career_data"]["cgpa"] is None:
-            with st.spinner("Đang phân tích CV..."):
-                print("Gui file ")
+            with st.spinner("Đang 'đọc' CV của bạn..."):
                 files = {"file": (uploaded_file.name, uploaded_file, "application/pdf")}
-                response = requests.post(f"{BASE_URL}/api/chat/extract", files=files)
-                result = response.json()
-                print("Response: ", response)
-                if response.status_code == 200:
-                    print("Chay toi day roi ne")
-                    st.session_state["career_data"].update(response.json())
-                    print("DU lieu sau khi extract tu file pdf: ", st.session_state["career_data"])
-                    st.success("Phân tích CV thành công!")
-                    if result.get("is_complete") is False:
-                        st.session_state["message"].append({""
-                        "role": "assistant", "content": "Hiện tại CV của bạn chưa đủ dữ liệu nên tôi có một vài câu hỏi dành cho bạn để hoàn thành"})
-                        
-                    if result.get("next_question"):
-                        print("Next question from API: ", result.get("next_question"))
-                        st.session_state["message"].append({""
-                        "role": "assistant", "content": result.get("next_question", "")})
-                    
+                try:
+                    response = requests.post(f"{BASE_URL}/api/chat/extract", files=files)
+                    if response.status_code == 200:
+                        result = response.json()
+                        st.session_state["career_data"].update(result)
+                        st.success("Trích xuất dữ liệu thành công!")
+                        if result.get("next_question"):
+                            st.session_state["message"].append({"role": "assistant", "content": result.get("next_question")})
+                        st.rerun()
+                except:
+                    st.error("Không thể kết nối đến Server.")
 
-# 3. Hiển thị Chat
-for msg in st.session_state["message"]:
-    with st.chat_message(msg["role"]):
-        st.markdown(msg["content"])
-print("CHay kiem tra missing value")
 
-# 4. Logic Gôm thông tin (Slot Filling)
+# --- MAIN CHAT INTERFACE ---
+chat_container = st.container(height=450 if "prediction_result" not in st.session_state else 250)
+
+with chat_container:
+    for msg in st.session_state["message"]:
+        with st.chat_message(msg["role"]):
+            st.markdown(msg["content"])
+
+# Slot Filling Logic
 missing_fields = [k for k, v in st.session_state["career_data"].items() if v is None]
+print("Missing field:", missing_fields)
 
-print("CHay kiem tra missing value")
-# 5. Ô nhập liệu (Luôn hiện để User chat bất cứ lúc nào)
-if prompt := st.chat_input("Nhập thông tin tại đây..."):
+if prompt := st.chat_input("Nhập thông tin hoặc câu hỏi của bạn..."):
     st.session_state["message"].append({"role": "user", "content": prompt})
-    with st.spinner("Đang xử lý thông tin..."):
-        print("Missing fields before API call: ", missing_fields)
-                
-        payload = {"message": prompt,
-                   "missing_field": missing_fields} # Gửi cả dữ liệu đã có để LLM biết đang thiếu gì
-        
-        print("Sending to API: ", payload)
-        print("----------------------------------------------------------")
-
+    
+    with st.spinner("Đang xử lý..."):
+        payload = {"message": prompt, "missing_field": missing_fields}
         response = requests.post(f"{BASE_URL}/api/handle_chat", json=payload)
-        print("----------------------------------------------------------")
-        print("API response content: ", response.json())
-
+        
         if response.status_code == 200:
-            result = response.json()
-            #Neu hoi ngoai le thi phan hoi lai va khong update du lieu
+            result = response.json()  # Giả sử result là 1 dict
+            
             for field, value in result.items():
-                    if field in st.session_state["career_data"] and value is not None:
-                        print(f"Updating field {field} with value {value}")
-                        st.session_state["career_data"][field] = value
-
-            # if result.get("is_off_topic"):
-            #     st.session_state["message"].append({
-            #         "role": "assistant", 
-            #         "content": result.get("analysis_feedback", "Hãy tập trung vào câu hỏi nhé!")
-            #     })
+                if field in st.session_state["career_data"] and value is not None:
+                    st.session_state["career_data"][field] = value
+                    print(f"✅ Đã gán {field}: {value}")
+                    print("Du lieu hien taij: ", st.session_state["career_data"])
 
             if result.get("next_question"):
-                print("Next question from API: ", result.get("next_question"))
-                st.session_state["message"].append({""
-                "role": "assistant", "content": result.get("next_question", "")})
-
+                st.session_state["message"].append({
+                    "role": "assistant", 
+                    "content": result.get("next_question")
+                })
+            
             if result.get("is_complete"):
                 st.session_state["message"].append({
                     "role": "assistant", 
-                    "content": "Cảm ơn bạn đã cung cấp đầy đủ thông tin! Tớ sẽ tiến hành dự báo sự nghiệp của bạn ngay bây giờ."
+                    "content": "🎉 Tuyệt vời! Tớ đã có đủ thông tin để phân tích rồi."
                 })
+            
+            # 3. Cuối cùng mới rerun để cập nhật UI
             st.rerun()
-                     
-           
-                #Cập nhật câu hỏi tiếp theo nếu còn thiếu thông tin
+            
         else:
-            st.error("Đã có lỗi xảy ra khi xử lý thông tin. Vui lòng thử lại sau.")
-    print("Current career data: ", st.session_state["career_data"])
+            st.error("Đã có lỗi xảy ra khi xử lý thông tin.")
+        print("Current career data: ", st.session_state["career_data"])
 
-    st.rerun()
-
-
-# 6. Khi ĐÃ GÔM ĐỦ -> Hiện nút Dự báo
+# --- PREDICTION RESULTS ---
 if st.session_state["mode"] and not missing_fields:
     if "prediction_result" not in st.session_state:
-        st.info("🎉 Tớ đã có đủ thông tin! Nhấn nút bên dưới để xem dự báo.")
-        print("Dataa trc khi predict", st.session_state["career_data"])
-        if st.button("🚀 XEM DỰ BÁO NGAY", use_container_width=True):
-            with st.spinner("Đang chạy mô hình Stacking ML..."):
+        st.balloons()
+        st.info("🚀 Tất cả dữ liệu đã sẵn sàng!")
+        if st.button("PHÂN TÍCH SỰ NGHIỆP NGAY", use_container_width=True, type="primary"):
+            with st.spinner("Hệ thống AI đang tính toán xác suất..."):
                 res = requests.post(f"{BASE_URL}/api/predict", json=st.session_state["career_data"])
                 if res.status_code == 200:
                     st.session_state["prediction_result"] = res.json()
                     st.rerun()
 
-# 7. Hiển thị Kết quả & Biểu đồ Waterfall
 if "prediction_result" in st.session_state:
     res = st.session_state["prediction_result"]
     st.divider()
     
-    col1, col2 = st.columns(2)
-    with col1:
-        st.metric("Xác suất có việc", f"{res['probability']*100:.2f}%")
-    with col2:
-        st.metric("Lương dự kiến", f"${res['estimated_salary']:,}/tháng")
+    # Dashboard hiển thị kết quả
+    st.subheader("📊 Kết quả dự báo chuyên sâu")
+    m_col1, m_col2, m_col3 = st.columns(3)
     
-    # Biểu đồ Waterfall SHAP
-    target_features = [
-        "cgpa", "backlogs", "college_tier", "country", 
-        "university_ranking_band", "internship_count", "aptitude_score", 
-        "communication_score", "specialization", "industry", "internship_quality_score"
-    ]
-    
-    features = res['explanations']['placement']['all_features']
-    df_all = pd.DataFrame(features)
-    
-    # Chỉ giữ lại những dòng có 'name' nằm trong danh sách 11 trường trên
-    df_plot = df_all[df_all['name'].isin(target_features)].copy()
-    
-    # Sắp xếp lại để biểu đồ nhìn đẹp hơn (từ ảnh hưởng mạnh nhất đến yếu nhất)
-    df_plot['abs_value'] = df_plot['value'].abs()
-    df_plot = df_plot.sort_values(by='abs_value', ascending=False)
-    # ---------------------------
+    with m_col1:
+        st.markdown(f"""<div class='metric-card'><p style='color:gray;'>Tỉ lệ trúng tuyển</p><h2>{res['probability']*100:.1f}%</h2></div>""", unsafe_allow_html=True)
+    with m_col2:
+        st.markdown(f"""<div class='metric-card'><p style='color:gray;'>Lương khởi điểm kỳ vọng</p><h2>${res['estimated_salary']:,}</h2></div>""", unsafe_allow_html=True)
+    with m_col3:
+        status = "Rất khả quan" if res['probability'] > 0.7 else "Cần nỗ lực thêm"
+        st.markdown(f"""<div class='metric-card'><p style='color:gray;'>Đánh giá chung</p><h2>{status}</h2></div>""", unsafe_allow_html=True)
 
-    fig = go.Figure(go.Waterfall(
-        name = "SHAP Impact", 
-        orientation = "v",
-        measure = ["relative"] * len(df_plot),
-        x = df_plot['name'],
-        y = df_plot['value'],
-        textposition = "outside",
-        text = [f"{v:+.2f}" for v in df_plot['value']], # Hiện con số cụ thể trên cột
-        connector = {"line":{"color":"rgb(63, 63, 63)"}},
-        increasing = {"marker":{"color":"#2ecc71"}}, # Màu xanh cho tác động tích cực
-        decreasing = {"marker":{"color":"#e74c3c"}}  # Màu đỏ cho tác động tiêu cực
-    ))
+    # Visualization
+    st.write("")
+    col_graph, col_advice = st.columns([2, 1])
     
-    fig.update_layout(
-        title="Mức độ ảnh hưởng của các yếu tố đến khả năng có việc",
-        showlegend = False,
-        height=500
-    )
-    
-    st.plotly_chart(fig, use_container_width=True)
+    with col_graph:
+        target_features = ["cgpa", "backlogs", "college_tier", "internship_count", "aptitude_score", "communication_score", "internship_quality_score"]
+        df_all = pd.DataFrame(res['explanations']['placement']['all_features'])
+        df_plot = df_all[df_all['name'].isin(target_features)].copy()
+        
+        fig = go.Figure(go.Waterfall(
+            orientation = "h",
+            measure = ["relative"] * len(df_plot),
+            y = df_plot['name'],
+            x = df_plot['value'],
+            text = [f"{v:+.2f}" for v in df_plot['value']],
+            increasing = {"marker":{"color":"#2ecc71"}},
+            decreasing = {"marker":{"color":"#e74c3c"}}
+        ))
+        fig.update_layout(title="Yếu tố ảnh hưởng (SHAP)", height=400, margin=dict(l=20, r=20, t=40, b=20))
+        st.plotly_chart(fig, use_container_width=True)
 
-    if st.button("🔄 Làm mới dữ liệu & Chat lại"):
-        st.session_state.clear()
-        st.rerun()
+    with col_advice:
+        st.markdown("### 💡 Lời khuyên cho bạn")
+        if res['probability'] < 0.6:
+            st.warning("- Hãy cải thiện điểm Aptitude Test.\n- Tìm kiếm thêm ít nhất 1 kỳ thực tập chuyên ngành.")
+        else:
+            st.success("- Hồ sơ của bạn rất mạnh!\n- Tập trung vào kỹ năng thương lượng lương.")
+        
+        if st.button("🔄 Làm lại từ đầu", use_container_width=True):
+            st.session_state.clear()
+            st.rerun()

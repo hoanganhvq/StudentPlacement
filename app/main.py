@@ -62,7 +62,8 @@ async def handle_chat(data: ChatInput):
         result = langchain_service.process_input(
             text_content="",
             missing_field=data.missing_field, # Chuyển pydantic sang dict
-            user_msg=data.message
+            user_msg=data.message,
+            # current_context=data.current_context
         )
         return result
     except Exception as e:

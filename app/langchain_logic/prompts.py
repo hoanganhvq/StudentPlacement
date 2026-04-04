@@ -59,8 +59,9 @@ Các trường bạn cần tập trung trích xuất là: {missing_field}
 {format_instructions}
 
 ### NGỮ CẢNH HỘI THOẠI:
-- **Context (Lịch sử)**: {context}
-- **Missing field(Dữ liệu còn thiếu)**: {missing_field}
+- **Lịch sử cuộc trò chuyện**: {context}
+- **Danh sách trường còn thiếu**: {missing_field}
+- **Tin nhắn mới nhất từ User**: "{user_msg}"
 
 ### NỘI DUNG NGƯỜI DÙNG VỪA NÓI:
 {user_msg}
