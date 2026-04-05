@@ -8,8 +8,9 @@ from dotenv import load_dotenv
 from openai import api_key
 from app.langchain_logic.prompts import CHAT_EXTRACT_PROMPT_TEMPLATE as CHAT_EXTRACT_PROMPT
 from app.langchain_logic.prompts import CV_EXTRACT_PROMPT_TEMPLATE as CV_EXTRACT_PROMPT
-from app.langchain_logic.parser import parser, parser_CV
-
+from app.langchain_logic.prompts import AI_INSIGHT_PROMPT as AI_INSIGHT_PROMPT
+from app.langchain_logic.parser import parser, parser_CV, parser_ai_insight
+from typing import List
 load_dotenv()
 
 class LangChainService:
@@ -30,6 +31,9 @@ class LangChainService:
 
         prompt_template_cv = ChatPromptTemplate.from_template(CV_EXTRACT_PROMPT)
         self.chain_cv = prompt_template_cv | self.llm | parser
+
+        prompt_template_ai_insight = ChatPromptTemplate.from_template(AI_INSIGHT_PROMPT)
+        self.chain_ai_insight = prompt_template_ai_insight | self.llm | parser_ai_insight
 
     
     def process_input_pdf(self, content:str):
@@ -75,4 +79,22 @@ class LangChainService:
             print(f"Error in LangChainService: {str(e)}")
             return {"error": "Đã có lỗi xảy ra khi xử lý thông tin. Vui lòng thử lại sau."}
     
-    
+    def process_ai_insight(self, ai_insight_salary: List[str], ai_insight_placement: List[str]):
+        try:
+            salary_str = ". ".join(ai_insight_salary)
+            placement_str = ". ".join(ai_insight_placement)
+
+            print("AI insight salary (processed): ", salary_str)
+            print("AI insight placement (processed): ", placement_str)
+
+            result = self.chain_ai_insight.invoke({
+                "format_instructions": parser_ai_insight.get_format_instructions(),
+                "ai_insights_placement": placement_str,
+                "ai_insights_salary": salary_str 
+            })
+
+            print("REsult insight: ", result)
+            return result
+        except Exception as e:
+            print(f"Error in LangChainService: {str(e)}")
+            return {"error": "Xay ra loi dua ra loi khuyen "}

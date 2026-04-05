@@ -51,6 +51,7 @@ class ChatInput(BaseModel):
     missing_field: List[str]
 
 
+
 #Du lie tra ra
 class FeatureImpace(BaseModel):
     name: str
@@ -71,3 +72,7 @@ class PredictionResponse(BaseModel):
     ai_insights_salary: Optional[List[str]]
     estimated_salary: float
     explanations: Dict[str, Any] 
+
+class Ai_insight (BaseModel):
+    ai_insight_placement: List[str]
+    ai_insight_salary: List[str]

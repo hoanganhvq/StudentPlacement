@@ -1,6 +1,6 @@
 from fastapi import FastAPI, HTTPException, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
-from app.schema import CareerInputPredict, ChatInput
+from app.schema import CareerInputPredict, ChatInput, Ai_insight
 from app.services.model_service import model_service, PredictionResponse
 from fastapi.encoders import jsonable_encoder
 from app.services.langchain_service import LangChainService
@@ -69,6 +69,27 @@ async def handle_chat(data: ChatInput):
     except Exception as e:
         print(f"Error in handle_chat: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Lỗi xử lý chat: {str(e)}")
+
+
+@app.post("/api/ai_insight")
+async def get_ai_insight(data: Ai_insight):
+    try:
+        print("Goi toi API:")
+        # SAI: Ai_insight.ai_insight_salary (truy cập class)
+        # ĐÚNG: data.ai_insight_salary (truy cập dữ liệu thực tế)
+        print("Salary: ", data.ai_insight_salary)
+        print("Placement: ", data.ai_insight_placement)
+        
+        result = langchain_service.process_ai_insight(
+            data.ai_insight_salary, 
+            data.ai_insight_placement
+        )
+        return result
+    except Exception as e:
+        print(f"Error in ai insight: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Lỗi xử lý chat: {str(e)}")
+
+
 
 if __name__ == "__main__":
     print("Dang chay server.....")

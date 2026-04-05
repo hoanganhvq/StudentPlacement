@@ -136,6 +136,13 @@ if prompt := st.chat_input("Nhập thông tin hoặc câu hỏi của bạn...")
                     print(f"✅ Đã gán {field}: {value}")
                     print("Du lieu hien taij: ", st.session_state["career_data"])
 
+            if result.get("is_complete"):
+                st.session_state["message"].append({
+                    "role": "assistant", 
+                    "content": "🎉 Tuyệt vời! Tớ đã có đủ thông tin để phân tích rồi."
+                })
+            
+
             if result.get("next_question"):
                 st.session_state["message"].append({
                     "role": "assistant", 
@@ -169,21 +176,35 @@ if st.session_state["mode"] and not missing_fields:
                     st.rerun()
 
 if "prediction_result" in st.session_state:
+    
+    
     res = st.session_state["prediction_result"]
     st.divider()
+
+    ai_insight = {
+        "ai_insight_placement": res.get('ai_insights_placement'),
+        "ai_insight_salary": res.get("ai_insights_salary")
+    }
+    print("AI Insight before sending: ", ai_insight)
+
+    response = requests.post(f"{BASE_URL}/api/ai_insight", json=ai_insight)
+    if response.status_code == 200:
+        res_ai_insight = response.json()
+        print("Dữ liệu đầu ra thực tế: ", res_ai_insight)
+        
     
     # Dashboard hiển thị kết quả
-    st.subheader("📊 Kết quả dự báo chuyên sâu")
+    st.subheader("Kết quả dự báo chuyên sâu")
     m_col1, m_col2, m_col3 = st.columns(3)
     
-    with m_col2:
-        # Format lương có dấu phẩy ngăn cách hàng nghìn
+    with m_col1:
+        prob_color = "#28a745" if res['probability'] > 0.7 else "#f39c12"
         st.markdown(f"""<div class='metric-card'>
-            <p style='color: #6c757d;'>Lương khởi điểm/năm</p>
-            <h2 style='color: #007bff;'>${res['estimated_salary']:,}</h2>
+            <p style='color:black;'>Tỉ lệ trúng tuyển</p>
+            <h2 style='color: {prob_color};'>{res['probability']*100:.1f}%</h2>
         </div>""", unsafe_allow_html=True)
     with m_col2:
-        st.markdown(f"""<div class='metric-card'><p style='color:black;'>Lương khởi điểm kỳ vọng/năm</p><h2>${res['estimated_salary']:,}</h2></div>""", unsafe_allow_html=True)
+        st.markdown(f"""<div class='metric-card'><p style='color:black;'>Lương khởi điểm kỳ vọng/năm</p><h2 style='color:black;'>${res['estimated_salary']:,}</h2></div>""", unsafe_allow_html=True)
     with m_col3:
         if res['probability'] > 0.7:
             status, color = "Rất khả quan", "#28a745" # Xanh lá
@@ -193,7 +214,7 @@ if "prediction_result" in st.session_state:
             status, color = "Cần nỗ lực thêm", "#dc3545" # Đỏ
 
         st.markdown(f"""<div class='metric-card'>
-            <p style='color: #6c757d;'>Đánh giá chung</p>
+            <p style='color:black;'>Đánh giá chung</p>
             <h2 style='color: {color};'>{status}</h2>
         </div>""", unsafe_allow_html=True)
     # Visualization
@@ -215,22 +236,30 @@ if "prediction_result" in st.session_state:
             decreasing = {"marker":{"color":"#e74c3c"}}
         ))
         fig.update_layout(title="Yếu tố ảnh hưởng (SHAP)", height=400, margin=dict(l=20, r=20, t=40, b=20))
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width='stretch')
 
     with col_advice:
-        st.markdown("### 💡 Phân tích từ AI")
+        st.markdown("### Phân tích từ AI")
         
-        # 1. Gán AI Insights về Việc làm (Placement)
-        if res.get('ai_insights_placement'):
+        # 1. Hiển thị Insight về Việc làm
+        # LƯU Ý: Phải dùng đúng key 'placement_clean' mà LLM trả về
+        placement_data = res_ai_insight.get('ai_insight_placement', [])
+        if placement_data:
             st.write("**Cơ hội nghề nghiệp:**")
-            for insight in res['ai_insights_placement']:
+            for insight in placement_data:
                 st.info(f"✨ {insight}")
+        else:
+            st.warning("Chưa có phân tích về cơ hội việc làm.")
         
-        # 2. Gán AI Insights về Lương (Salary)
-        if res.get('ai_insights_salary'):
+        # 2. Hiển thị Insight về Lương
+        # LƯU Ý: Phải dùng đúng key 'salary_clean'
+        salary_data = res_ai_insight.get('ai_insight_salary', [])
+        if salary_data:
             st.write("**Góc nhìn về thu nhập:**")
-            for s_insight in res['ai_insights_salary']:
+            for s_insight in salary_data:
                 st.success(f"💰 {s_insight}")
+        else:
+            st.warning("Chưa có phân tích về mức lương.")
 
         st.divider()
         
