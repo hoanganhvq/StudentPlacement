@@ -15,16 +15,16 @@ load_dotenv()
 
 class LangChainService:
     def __init__(self):
-        self.llm = ChatOpenAI(
-            model="google/gemini-2.0-flash-001",  # Hoặc "google/gemini-pro-1.5" tùy nhu cầu
-            openai_api_key=os.getenv("OPEN_ROUTER"), # Dùng API Key của OpenRouter
-            base_url="https://openrouter.ai/api/v1",
+        self.llm = ChatGroq(
+            model="llama-3.3-70b-versatile",  # Hoặc "google/gemini-pro-1.5" tùy nhu cầu
+            groq_api_key=os.getenv("GEMENI_API_KEY"), # Dùng API Key của OpenRouter
+            # base_url="https://openrouter.ai/api/v1",
             temperature=1,
-            max_tokens=1000,
-            default_headers={
-                "HTTP-Referer": "http://localhost:3000", # OpenRouter khuyến khích có cái này
-                "X-Title": "Career Advisory System"
-            }
+            # max_tokens=1000,
+            # default_headers={
+            #     "HTTP-Referer": "http://localhost:3000", # OpenRouter khuyến khích có cái này
+            #     "X-Title": "Career Advisory System"
+            # }
         )
         prompt_template_chat = ChatPromptTemplate.from_template(CHAT_EXTRACT_PROMPT)
         self.chain_chat = prompt_template_chat | self.llm | parser

@@ -74,7 +74,7 @@ if st.session_state["mode"] is None:
             st.success("### 💬 Chat trực tiếp\nCung cấp thông tin qua việc trò chuyện cùng AI.")
             if st.button("Bắt đầu Chat ngay", use_container_width=True):
                 st.session_state["mode"] = "chat"
-                welcome_content = "💡 **Hãy chia sẻ một chút về học vấn của bạn:**\n* Bạn học trường nào?\n* Chuyên ngành của bạn là gì?"
+                welcome_content = "💡 **Hãy chia sẻ một chút về học vấn của bạn ?**"
                 st.session_state["message"].append({"role": "assistant", "content": welcome_content})
                 st.rerun()
 
