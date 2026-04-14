@@ -83,3 +83,25 @@ Tối ưu:
 Sử dụng Optuna để tìm ngưỡng (threshold) tối ưu nhằm cân bằng giữa Precision và Recall.
 Giải thích & Công bằng:
 Triển khai SHAP value để trực quan hóa mức độ ảnh hưởng của đặc trưng và kiểm tra tính công bằng của dự báo.
+
+
+
+🚀 Hướng dẫn cài đặt
+1. Chuẩn bị môi trường
+python -m venv venv
+source venv/bin/activate      # Linux/macOS
+# venv\Scripts\activate      # Windows
+
+pip install -r requirements.txt
+2. Cấu hình biến môi trường
+
+Tạo file .env tại thư mục gốc:
+
+GEMINI_API_KEY="..."
+3. Chạy ứng dụng
+▶️ Backend (FastAPI)
+python -m app.main
+🎨 Frontend (Streamlit)
+streamlit run frontend/frontend_streamlit.py
+4. Triển khai với Docker
+docker-compose up --build
