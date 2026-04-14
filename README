@@ -38,3 +38,37 @@ Dự án này là một hệ thống toàn diện hỗ trợ sinh viên trong vi
 ├── Dockerfile            # Dockerfile cho Backend
 ├── Dockerfile.frontend   # Dockerfile cho Frontend
 └── docker-compose.yml    # Cấu hình triển khai hệ thống
+🚀 Hướng dẫn cài đặt
+1. Chuẩn bị môi trường
+Cài đặt các thư viện cần thiết:
+
+Bash
+python -m venv venv
+source venv/bin/activate  # Trên Linux/macOS
+# Hoặc venv\Scripts\activate trên Windows
+pip install -r requirements.txt
+2. Cấu hình biến môi trường
+Tạo file .env tại thư mục gốc và thêm API Key:
+
+Đoạn mã
+GEMINI_API_KEY="AIzaSyB0fCCHvxCr_VrbgYgnriKU8mQdkqYdj-s"
+3. Chạy ứng dụng
+Chạy Backend (FastAPI):
+
+Bash
+python -m app.main
+Chạy Frontend (Streamlit):
+
+Bash
+streamlit run frontend/frontend_streamlit.py
+4. Triển khai với Docker
+Bash
+docker-compose up --build
+📊 Phương pháp tiếp cận ML
+Tiền xử lý: Xử lý dữ liệu thô, encoding các biến phân loại và scaling dữ liệu.
+
+Huấn luyện: Thực nghiệm với KNN, RF, XGBoost và kết hợp mô hình qua Stacking.
+
+Tối ưu: Sử dụng Optuna để tìm ngưỡng (threshold) tối ưu nhằm cân bằng giữa Precision và Recall.
+
+Giải thích & Công bằng: Triển khai SHAP value để trực quan hóa mức độ ảnh hưởng của đặc trưng và kiểm tra tính công bằng của dự báo.
